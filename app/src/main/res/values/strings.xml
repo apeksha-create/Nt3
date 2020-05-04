@@ -1,0 +1,105 @@
+<resources>
+    <string name="app_name">NT3</string>
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="prompt_username">Username</string>
+    <string name="welcome">Welcome to NT3!</string>
+    <string name="remember_me">Remember Me</string>
+    <string name="login">LOGIN</string>
+
+
+    <string name="Dashboard">Dashboard</string>
+    <string name="total_count">Total Count : </string>
+    <string name="status">Status : </string>
+    <string name="ticket_no">Ticket No : TT-000 </string>
+    <string name="title">Title : </string>
+    <string name="Caller">Reported By : </string>
+    <string name="Agent">Agent : </string>
+    <string name="Start_Date">Start Date : </string>
+    <string name="Priority">Priority : </string>
+
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="login_failed">"Login failed"</string>
+    <string name="Invalid_credentials">Invalid credentials</string>
+    <string name="no_data">No data found</string>
+    <string name="api_failed">"Api failed"</string>
+    <string name="download">PDF successfully downloaded</string>
+    <string name="Share">Share</string>
+    <string name="open">Open</string>
+    <string name="permission">Allow Permission and try agai</string>
+    <string name="Critical">Critical</string>
+    <string name="High">High</string>
+    <string name="Medium">Medium</string>
+    <string name="Low">Low</string>
+    <string name="new_incident">Add New Incident </string>
+
+   <!-- new incident-->
+    <string name="select_area">Select Area :</string>
+    <string name="select_services">Select Services :</string>
+    <string name="create">Create</string>
+    <string name="enter_title">Please enter title</string>
+    <string name="enter_area">Please select area</string>
+    <string name="enter_services">Please select services</string>
+    <string name="enter_caller">Please Add Reported Person </string>
+    <string name="general_info">General Information </string>
+    <string name="description">Description </string>
+    <string name="next">Next </string>
+    <string name="previous">Previous </string>
+    <string name="network">Network </string>
+    <string name="technology">Technologies </string>
+    <string name="service_affacted">Service Affacted </string>
+    <string name="internation_calls">Internationa Calls </string>
+    <string name="voice_mails">Voice Mail </string>
+    <string name="dice">Dice </string>
+    <string name="fact">facturaco</string>
+    <string name="prepaid">Prepaid </string>
+    <string name="sms">SMS </string>
+    <string name="supervise">Supervise </string>
+    <string name="support_callcentre">Call Center Support </string>
+    <string name="inter_operators">InterOperator Support </string>
+    <string name="sales">Sales </string>
+    <string name="ussd">USSD </string>
+    <string name="you">YOU </string>
+    <string name="voice">Voice </string>
+    <string name="province">Province </string>
+    <string name="affacted_site">Affacted Site </string>
+    <string name="reason_qualifications">Reason &amp; Qualifications </string>
+    <string name="reason">Reason </string>
+    <string name="subreason">Sub Reason </string>
+    <string name="event">Event </string>
+    <string name="categories">Categories </string>
+    <string name="qualification">Qualifications Urgency </string>
+    <string name="affacted_site_list">Affacted Sites </string>
+    <string name="select">Select One </string>
+
+    <string-array name="openIncidentsSpinner">
+        <item>Open Incidents</item>
+        <item>Open Problem</item>
+        <item>Open Changes</item>
+    </string-array>
+
+    <string-array name="statusAgentSpinner">
+        <item>status</item>
+        <item>agent</item>
+    </string-array>
+    <string-array name="statusAgentDepartmentSpinner">
+        <item>status</item>
+        <item>agent</item>
+        <item>Area</item>
+    </string-array>
+    <string-array name="statusDomainSpinner">
+        <item>status</item>
+        <item>domain</item>
+    </string-array>
+
+    <string-array name="ChangesSpinner">
+        <item>Emergency Change</item>
+        <item>Routine Change</item>
+        <item>Normal Change</item>
+    </string-array>
+
+</resources>
