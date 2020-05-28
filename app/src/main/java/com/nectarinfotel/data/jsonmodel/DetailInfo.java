@@ -8,7 +8,41 @@ import com.google.gson.annotations.SerializedName;
 
 public class DetailInfo implements Parcelable
 {
+    @SerializedName("sub_reason_id")
+    @Expose
+    private String sub_reason_id;
 
+    @SerializedName("sub_reason")
+    @Expose
+    private String sub_reason;
+
+    @SerializedName("site_id")
+    @Expose
+    private String site_id;
+    @SerializedName("site_name")
+    @Expose
+    private String site_name;
+    @SerializedName("province")
+    @Expose
+    private String province;
+    @SerializedName("site_code")
+    @Expose
+    private String site_code;
+    @SerializedName("reason_id")
+    @Expose
+    private String reason_id;
+    @SerializedName("reason")
+    @Expose
+    private String reason;
+    @SerializedName("orgnid")
+    @Expose
+    private String orgnid;
+    @SerializedName("name")
+    @Expose
+    private String name;
+    @SerializedName("id")
+    @Expose
+    private String id;
     @SerializedName("ticketid")
     @Expose
     private String ticketid;
@@ -63,9 +97,108 @@ public class DetailInfo implements Parcelable
         this.startDate = ((String) in.readValue((String.class.getClassLoader())));
         this.priority = ((String) in.readValue((String.class.getClassLoader())));
         this.status = ((String) in.readValue((String.class.getClassLoader())));
+        this.id = ((String) in.readValue((String.class.getClassLoader())));
+        this.name = ((String) in.readValue((String.class.getClassLoader())));
+        this.orgnid = ((String) in.readValue((String.class.getClassLoader())));
+        this.reason = ((String) in.readValue((String.class.getClassLoader())));
+        this.reason_id = ((String) in.readValue((String.class.getClassLoader())));
+        this.site_id = ((String) in.readValue((String.class.getClassLoader())));
+        this.site_name = ((String) in.readValue((String.class.getClassLoader())));
+        this.site_code = ((String) in.readValue((String.class.getClassLoader())));
+        this.province = ((String) in.readValue((String.class.getClassLoader())));
+        this.sub_reason = ((String) in.readValue((String.class.getClassLoader())));
+        this.sub_reason_id = ((String) in.readValue((String.class.getClassLoader())));
     }
 
     public DetailInfo() {
+    }
+
+    public String getSub_reason_id() {
+        return sub_reason_id;
+    }
+
+    public void setSub_reason_id(String sub_reason_id) {
+        this.sub_reason_id = sub_reason_id;
+    }
+
+    public String getSub_reason() {
+        return sub_reason;
+    }
+
+    public void setSub_reason(String sub_reason) {
+        this.sub_reason = sub_reason;
+    }
+
+    public String getSite_id() {
+        return site_id;
+    }
+
+    public void setSite_id(String site_id) {
+        this.site_id = site_id;
+    }
+
+    public String getSite_name() {
+        return site_name;
+    }
+
+    public void setSite_name(String site_name) {
+        this.site_name = site_name;
+    }
+
+    public String getProvince() {
+        return province;
+    }
+
+    public void setProvince(String province) {
+        this.province = province;
+    }
+
+    public String getSite_code() {
+        return site_code;
+    }
+
+    public void setSite_code(String site_code) {
+        this.site_code = site_code;
+    }
+
+    public String getReason_id() {
+        return reason_id;
+    }
+
+    public void setReason_id(String reason_id) {
+        this.reason_id = reason_id;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public String getOrgnid() {
+        return orgnid;
+    }
+
+    public void setOrgnid(String orgnid) {
+        this.orgnid = orgnid;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getTicketid() {
@@ -150,6 +283,17 @@ public class DetailInfo implements Parcelable
         dest.writeValue(startDate);
         dest.writeValue(priority);
         dest.writeValue(status);
+        dest.writeValue(id);
+        dest.writeValue(name);
+        dest.writeValue(orgnid);
+        dest.writeValue(reason);
+        dest.writeValue(reason_id);
+        dest.writeValue(site_name);
+        dest.writeValue(site_code);
+        dest.writeValue(site_id);
+        dest.writeValue(province);
+        dest.writeValue(sub_reason);
+        dest.writeValue(sub_reason_id);
     }
 
     public int describeContents() {

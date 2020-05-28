@@ -58,6 +58,7 @@ class DetailActivity : AppCompatActivity() {
             Log.d("title",title)
             Log.d("userid", NectarApplication.userID)
             context.startActivity(intent)
+
         }
     }
 

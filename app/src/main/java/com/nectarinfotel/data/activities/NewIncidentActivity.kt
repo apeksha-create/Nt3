@@ -16,14 +16,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.nectarinfotel.R
-import com.nectarinfotel.data.adapter.MainPagerAdapter
-import com.nectarinfotel.data.adapter.SiteAdapter
+import com.nectarinfotel.data.adapter.*
+import com.nectarinfotel.data.jsonmodel.DetailInfo
 import com.nectarinfotel.data.jsonmodel.DetailResponse
 import com.nectarinfotel.ui.login.LoginActivity
 import com.nectarinfotel.utils.NectarApplication
 import com.nectarinfotel.utils.isColorLight
 import com.nectarinfotel.utils.onPageSelected
-import kotlinx.android.synthetic.main.activity_login_new.*
 import kotlinx.android.synthetic.main.affacted_site_popup_layout.*
 import kotlinx.android.synthetic.main.new_incident_layout.*
 import kotlinx.android.synthetic.main.new_incident_layout.dots
@@ -32,43 +31,51 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.util.*
-import kotlin.math.min
+import kotlin.collections.ArrayList
 
 class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedListener, CompoundButton.OnCheckedChangeListener {
     val site: ArrayList<String> = ArrayList()
-    private var siteValueList: MutableList<String> = mutableListOf()
+    private var siteValueList: ArrayList<DetailInfo> = ArrayList()
+    private var siteValueListid: ArrayList<DetailInfo> = ArrayList()
+    private var sitelist: ArrayList<DetailInfo> = ArrayList()
+    private var arealist: MutableList<DetailInfo> = mutableListOf()
+    private var provincelist: MutableList<DetailInfo> = mutableListOf()
+    private var categorylist: MutableList<DetailInfo> = mutableListOf()
+    private var eventlist: MutableList<DetailInfo> = mutableListOf()
+    private var reasonlist: MutableList<DetailInfo> = mutableListOf()
+    private var subreasonlist: MutableList<DetailInfo> = mutableListOf()
+    private var servicelist: MutableList<DetailInfo> = mutableListOf()
+    private var callerList: ArrayList<DetailInfo> = ArrayList()
+    private var callerList_filter: ArrayList<DetailInfo> = ArrayList()
+
     // Initialize a new array with elements
-    val colors = arrayOf(
-        "Nilesh","Apeksha","Rekha","Sonali","Rashmi",
-        "Priya","GreenYellow"
+    val urgency = arrayOf(
+        "Low","High","Medium","Critical"
     )
-    val area_spinner = arrayOf(
-        "Hadapsar","Magarpatta","Goa","India","Pune"
-    )
-    val services_spinner = arrayOf(
-        "alarm service"
-        )
 
-
-    val affactedsite = arrayOf(
-        "site1","sit2","site3","site4","site5",
-        "site6","site7"
-    )
-    var province_value: String? =null
+    var technology: String? =null
+    var serviceaffacted: String? =null
+    var urgency_value: String? =null
+    var provinceid: String? =null
     var area: String? =null
+    var areaid: String? =null
     var services: String? =null
-    var category: String? =null
-    var event: String? =null
+    var servicesid: String? =null
+    var categoryid: String? =null
+    var eventid: String? =null
     var reason: String? =null
+    var reasonid: String? ="0"
+    var subreason: String? =null
+    var sub_reasonid: String? ="0"
+    var siteid: String? =null
+    var callerid: String? =null
+    internal lateinit var info: DetailInfo
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(com.nectarinfotel.R.layout.new_incident_layout)
         setSupportActionBar(toolbar_incident)
 
 
-
-        //set data into adapter for services
-        initserviceSpinnerResources()
 
        //language conversion
         changelanguage()
@@ -96,7 +103,10 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
          GetALlProvinceList()
 
         //call api for get Arealist
-        GetALlAreaList()
+         GetALlAreaList()
+
+        //call api for get callerlist
+        GetALlServiceList()
 
         //call api for get categorylist
         GetALlCategoryList()
@@ -104,36 +114,25 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
         //call api for get Eventlist
         GetALlEventList()
 
-
-        //call api for get Eventlist
+        //call api for get ReasonList
         GetALlReasonstList()
+
+        //call api for get ReasonList
+        GetALlSubReasonstList()
+
 
         //call api for get AffatcedSiteslist
         GetALlAffactedSitestList()
 
-        // Initialize a new array adapter object
-        val adapter = ArrayAdapter<String>(
-            this, // Context
-            android.R.layout.simple_dropdown_item_1line, // Layout
-            colors // Array
-        )
+        //call api for get callerlist
+        GetALlCallerList()
 
-
-
-
-        // Set the AutoCompleteTextView adapter
-        incident_reported_by.setAdapter(adapter)
-
-
-        // Auto complete threshold
-        // The minimum number of characters to type to show the drop down
-        incident_reported_by.threshold = 1
-
+        seturgency()
 
         pager.adapter = MainPagerAdapter()
         pager.offscreenPageLimit = 3
         dots.attachViewPager(pager)
-        //  pager.setCurrentItem(1, true);
+
         pager.onPageSelected {
             val colorRes = when (it) {
                 0 -> com.nectarinfotel.R.color.white
@@ -141,7 +140,6 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
                 else -> com.nectarinfotel.R.color.white
             }
             val color = ContextCompat.getColor(this, colorRes)
-           // frame.setBackgroundColor(color)
             dots.setDotTintRes(if (color.isColorLight()) com.nectarinfotel.R.color.colorPrimaryDark else com.nectarinfotel.R.color.white)
         }
         dots.setDotTintRes( com.nectarinfotel.R.color.colorPrimaryDark)
@@ -150,6 +148,24 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
             showallsites()
         }
         next_layout.setOnClickListener{
+
+            if(incident_title.text.toString().length==0)
+            {
+                Toast.makeText(applicationContext,resources.getString(com.nectarinfotel.R.string.enter_title),Toast.LENGTH_SHORT).show()
+            } else if (areaid.equals("0"))
+            {
+                Toast.makeText(applicationContext,resources.getString(com.nectarinfotel.R.string.enter_area),Toast.LENGTH_SHORT).show()
+            }
+            else if (servicesid.equals("0"))
+            {
+                Toast.makeText(applicationContext,resources.getString(com.nectarinfotel.R.string.enter_services),Toast.LENGTH_SHORT).show()
+            }
+            else if (incident_reported_by.text.toString().length==0)
+            {
+                Toast.makeText(applicationContext,resources.getString(com.nectarinfotel.R.string.enter_caller),Toast.LENGTH_SHORT).show()
+            }
+            else
+            {
             previous_layout.visibility=View.VISIBLE
 
             if(pager.currentItem==0)
@@ -163,7 +179,7 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
             {
                 next_layout.visibility=View.GONE
                 pager.setCurrentItem(2, true);
-            }
+            }}
         }
 
         previous_layout.setOnClickListener{
@@ -171,21 +187,34 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
             {
                 next_layout.visibility=View.VISIBLE
                 pager.setCurrentItem(1, true);
+                affacted_site.setText("")
             } else if(pager.currentItem==1)
             {
                 previous_layout.visibility=View.GONE
                 next_layout.visibility=View.VISIBLE
                 pager.setCurrentItem(0, true);
             }
-
         }
+
+        affactedsite_delete1.setOnClickListener(View.OnClickListener {
+            site1_layout.visibility=View.GONE
+        })
+
+        affactedsite_delete2.setOnClickListener(View.OnClickListener {
+            site2_layout.visibility=View.GONE
+        })
 
         // Set an item click listener for auto complete text view
         incident_reported_by.onItemClickListener = AdapterView.OnItemClickListener{
                 parent,view,position,id->
             val selectedItem = parent.getItemAtPosition(position).toString()
             // Display the clicked item using toast
-            Toast.makeText(applicationContext,"Selected : $selectedItem", Toast.LENGTH_SHORT).show()
+            Log.d("callerListcallerList",""+AutoCompleteAdapter.callerlist.size);
+            var name=AutoCompleteAdapter.callerlist.get(position).name
+            callerid=AutoCompleteAdapter.callerlist.get(position).id
+            Log.d("name",""+name);
+            Log.d("id",""+callerid);
+            //Toast.makeText(applicationContext,"Selected : $name"+id+position+selectedItem, Toast.LENGTH_SHORT).show()
         }
         incident_reported_by.onFocusChangeListener = View.OnFocusChangeListener{
                 view, b ->
@@ -197,35 +226,35 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
         }
         // Set a dismiss listener for auto complete text view
         incident_reported_by.setOnDismissListener {
-            Toast.makeText(applicationContext,"caller closed.",Toast.LENGTH_SHORT).show()
-        }
 
+        }
 
         // Set an item click listener for auto complete text view
         affacted_site.onItemClickListener = AdapterView.OnItemClickListener{
                 parent,view,position,id->
             val selectedItem = parent.getItemAtPosition(position).toString()
-            // Display the clicked item using toast
-            siteValueList.add(selectedItem)
-            Log.d("siteValueList","fgfhfg"+siteValueList.size)
-            if(siteValueList.size==1)
+
+            Log.d("sitelistfilter",""+SiteAutoCompleteAdapter.Sitelist.size);
+            var name=SiteAutoCompleteAdapter.Sitelist.get(position).site_name
+            siteid=SiteAutoCompleteAdapter.Sitelist.get(position).site_id
+            Log.d("name",""+name);
+            Log.d("id",""+siteid);
+            info= DetailInfo()
+            info.site_name=SiteAutoCompleteAdapter.Sitelist.get(position).site_name
+            info.site_code=SiteAutoCompleteAdapter.Sitelist.get(position).site_code
+            info.site_id=SiteAutoCompleteAdapter.Sitelist.get(position).site_id
+            info.province=SiteAutoCompleteAdapter.Sitelist.get(position).province
+            siteValueList.add(info)
+            siteValueListid.add(info)
+
+            if(siteValueList.size>0)
             {
-                site1.text=selectedItem
-            }else if(siteValueList.size==2)
-            {
-                site1.text=siteValueList.get(0)
-                site2.text=siteValueList.get(1)
-            }else if(siteValueList.size>2)
-            {
-                Log.d("gfgf","fgfhfg")
-                site1.text=siteValueList.get(0)
-                site2.text=siteValueList.get(1)
-                var count=siteValueList.size-2
-                extra_site.text="+"+count+"More"
+                var count=siteValueList.size
+                extra_site.visibility=View.VISIBLE
+                extra_site.text=""+count+" site Added"
             }
 
-
-            Toast.makeText(applicationContext,"Selected : $selectedItem", Toast.LENGTH_SHORT).show()
+           // Toast.makeText(applicationContext,"Selected : $selectedItem", Toast.LENGTH_SHORT).show()
         }
         // Set a focus change listener for auto complete text view
         affacted_site.onFocusChangeListener = View.OnFocusChangeListener{
@@ -237,13 +266,13 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
         }
         // Set a dismiss listener for auto complete text view
         affacted_site.setOnDismissListener {
-            Toast.makeText(applicationContext,"Suggestion closed.",Toast.LENGTH_SHORT).show()
+
         }
         backImageView_incident.setOnClickListener {
             finish()
         }
-        create_incident.setOnClickListener {
-          if(incident_title.text.toString().length==0)
+        create_incident_button.setOnClickListener {
+         /* if(incident_title.text.toString().length==0)
           {
               Toast.makeText(applicationContext,resources.getString(com.nectarinfotel.R.string.enter_title),Toast.LENGTH_SHORT).show()
           }else if (area==null)
@@ -259,12 +288,88 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
               Toast.makeText(applicationContext,resources.getString(com.nectarinfotel.R.string.enter_caller),Toast.LENGTH_SHORT).show()
           }
             else
-          {
+          {*/
 
-          }
+              val siteid = siteValueList.joinToString { it -> "\'${it.site_id}\'" }
+             /* Log.d("commaSeperatedString",siteid);
+
+
+              Log.d("area",areaid)
+              Log.d("reportedby",callerid);
+              Log.d("title",incident_title.text.toString());
+              Log.d("desc","desc");
+              Log.d("description_format","text");
+              Log.d("province",provinceid);
+              Log.d("reasonid",reasonid);
+              Log.d("subreason",sub_reasonid);
+              Log.d("event",eventid);
+              Log.d("category",categoryid);
+              Log.d("services",servicesid);
+              Log.d("urgency","4");
+              Log.d("service_aftd_id",serviceaffacted);
+              Log.d("network",technology);
+              Log.d("userid",NectarApplication.userID);
+              Log.d("siteid",siteid);*/
+
+              IncidentCreateAPI(areaid,callerid,incident_title.text.toString(),incident_description_text.text.toString(),"text",provinceid,reasonid,sub_reasonid,eventid,categoryid,servicesid,urgency_value,serviceaffacted,technology,NectarApplication.userID,siteid,this)
+
+          //}
         }
     }
 
+    private fun seturgency() {
+        incident_qualifications.onItemSelectedListener = this
+
+        //Creating the ArrayAdapter instance having the country list
+        val aa = ArrayAdapter(this, android.R.layout.simple_spinner_item, urgency)
+        aa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        //Setting the ArrayAdapter data on the Spinner
+        incident_qualifications.adapter = aa
+    }
+    private fun IncidentCreateAPI(
+
+        areaid: String?,
+        callerid: String?,
+        title: String,
+        desc: String,
+        descformat: String,
+        provinceid: String?,
+        reasonid: String?,
+        subReasonid: String?,
+        eventid: String?,
+        categoryid: String?,
+        servicesid: String?,
+        urgency: String?,
+        serviceaffacted: String?,
+        technology: String?,
+        userID: String,
+        siteid: String,
+        newIncidentActivity: NewIncidentActivity
+    ) {
+        var call = NectarApplication.mRetroClient?.callIncidentCretaeAPI(areaid,callerid,title,desc,descformat,provinceid,reasonid,subReasonid,eventid,categoryid,urgency,serviceaffacted,siteid,technology,userID,servicesid)
+        call?.enqueue(object : Callback<JsonObject> {
+            override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
+                Log.d("incidentcreate_response", response.body().toString())
+                val rsp: JsonObject? = response.body() ?: return
+                var response=response.body().toString()
+                val detailResponse = Gson().fromJson<DetailResponse>(rsp,DetailResponse::class.java)
+                Log.d("message", ""+detailResponse.msg)
+                if(detailResponse.msg.equals("Data Added Successfully"))
+                {
+                    DetailActivity.getStartIntent(newIncidentActivity, "status", 1, "new", "new")
+
+                }else{
+
+                    Toast.makeText(applicationContext, ""+detailResponse.msg, Toast.LENGTH_SHORT).show()
+                }
+            }
+            override fun onFailure(call: Call<JsonObject>, t: Throwable) {
+
+                Log.d("incidentcreate_fail", "str_responsefail"+t)
+                Toast.makeText(applicationContext, "please try again"+t, Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
     private fun changelanguage() {
         if(LoginActivity.language.equals("Portuguese"))
         {
@@ -352,20 +457,115 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
             affacted_site_text.setText(resources.getString(com.nectarinfotel.R.string.affacted_site))
         }
     }
-    private fun GetALlAffactedSitestList() {
-        var call = NectarApplication.mRetroClient?.callAffactedSitesListAPI(1)
+    private fun GetALlServiceList() {
+        var call = NectarApplication.mRetroClient?.callServiceListAPI(1,areaid)
         call?.enqueue(object : Callback<JsonObject> {
             override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
-                Log.d("str_response", response.body().toString())
+                Log.d("str_response_service", response.body().toString())
                 val rsp: JsonObject? = response.body() ?: return
                 var response=response.body().toString()
                 val detailResponse = Gson().fromJson<DetailResponse>(rsp,DetailResponse::class.java)
                 Log.d("message", ""+detailResponse.msg)
                 if(detailResponse.msg.equals("Data found"))
                 {
-                    Log.d("jsonarray", ""+detailResponse.site_name)
+                    // Log.d("jsonarray", ""+detailResponse.site_name)
                     //set data into adapter for area
-                    initAffactedSitesResources(detailResponse.site_name)
+                    servicelist = mutableListOf()
+
+                    servicelist.addAll(detailResponse.info)
+                    initServiceResources(servicelist)
+                }else{
+                    servicelist = mutableListOf()
+                    info=DetailInfo()
+                    info.id="0"
+                    info.name="Select One"
+                    servicelist.add(info)
+                    initServiceResources(servicelist)
+                    // Toast.makeText(applicationContext, ""+detailResponse.msg, Toast.LENGTH_SHORT).show()
+                }
+            }
+            override fun onFailure(call: Call<JsonObject>, t: Throwable) {
+
+                Log.d("str_responsefail_sites", "str_responsefail"+t)
+                Toast.makeText(applicationContext, "please try again"+t, Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+    private fun GetALlSubReasonstList() {
+        var call = NectarApplication.mRetroClient?.callSubReasonListAPI(1,reasonid)
+        call?.enqueue(object : Callback<JsonObject> {
+            override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
+                Log.d("str_response_sites", response.body().toString())
+                val rsp: JsonObject? = response.body() ?: return
+                var response=response.body().toString()
+                val detailResponse = Gson().fromJson<DetailResponse>(rsp,DetailResponse::class.java)
+                Log.d("message", ""+detailResponse.msg)
+                if(detailResponse.msg.equals("Data found"))
+                {
+                    // Log.d("jsonarray", ""+detailResponse.site_name)
+                    //set data into adapter for area
+                    subreasonlist = mutableListOf()
+                    subreasonlist.addAll(detailResponse.info)
+                    initsubReasonsSpinnerResources(subreasonlist)
+                }else{
+                    subreasonlist = mutableListOf()
+                    info=DetailInfo()
+                    info.sub_reason_id="0"
+                    info.sub_reason="Select One"
+                    subreasonlist.add(info)
+                    initsubReasonsSpinnerResources(subreasonlist)
+                   // Toast.makeText(applicationContext, ""+detailResponse.msg, Toast.LENGTH_SHORT).show()
+                }
+            }
+            override fun onFailure(call: Call<JsonObject>, t: Throwable) {
+
+                Log.d("str_responsefail_sites", "str_responsefail"+t)
+                Toast.makeText(applicationContext, "please try again"+t, Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+    private fun GetALlAffactedSitestList() {
+        var call = NectarApplication.mRetroClient?.callAffactedSitesListAPI(1)
+        call?.enqueue(object : Callback<JsonObject> {
+            override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
+                Log.d("str_response_sites", response.body().toString())
+                val rsp: JsonObject? = response.body() ?: return
+                var response=response.body().toString()
+                val detailResponse = Gson().fromJson<DetailResponse>(rsp,DetailResponse::class.java)
+                Log.d("message", ""+detailResponse.msg)
+                if(detailResponse.msg.equals("Data found"))
+                {
+                   // Log.d("jsonarray", ""+detailResponse.site_name)
+                    //set data into adapter for area
+                    sitelist.addAll(detailResponse.info)
+                    initAffactedSitesResources(sitelist)
+                }else{
+                    Toast.makeText(applicationContext, ""+detailResponse.msg, Toast.LENGTH_SHORT).show()
+                }
+            }
+            override fun onFailure(call: Call<JsonObject>, t: Throwable) {
+
+                Log.d("str_responsefail_sites", "str_responsefail"+t)
+                Toast.makeText(applicationContext, "please try again"+t, Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+    private fun GetALlCallerList() {
+        var call = NectarApplication.mRetroClient?.callCallerListAPI(1)
+        call?.enqueue(object : Callback<JsonObject> {
+            override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
+                Log.d("str_response_caller", response.body().toString())
+                val rsp: JsonObject? = response.body() ?: return
+                var response=response.body().toString()
+                val detailResponse = Gson().fromJson<DetailResponse>(rsp,DetailResponse::class.java)
+                Log.d("message", ""+detailResponse.msg)
+                if(detailResponse.msg.equals("Data found"))
+                {
+                    Log.d("jsonarray", ""+detailResponse.reason)
+                    //set data into adapter for area
+                 //   initCallerResources(detailResponse.info)
+                    callerList.addAll(detailResponse.info)
+                    initCallerResources(callerList)
                 }else{
                     Toast.makeText(applicationContext, ""+detailResponse.msg, Toast.LENGTH_SHORT).show()
                 }
@@ -377,7 +577,6 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
             }
         })
     }
-
     private fun GetALlReasonstList() {
         var call = NectarApplication.mRetroClient?.callReasonsListAPI(1)
         call?.enqueue(object : Callback<JsonObject> {
@@ -390,8 +589,13 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
                 if(detailResponse.msg.equals("Data found"))
                 {
                     Log.d("jsonarray", ""+detailResponse.reason)
-                    //set data into adapter for area
-                    initReasonsSpinnerResources(detailResponse.reason)
+                    //set data into adapter for reason
+                    info=DetailInfo()
+                    info.reason_id="0"
+                    info.reason="Select One"
+                    reasonlist.add(info)
+                    reasonlist.addAll(detailResponse.info)
+                    initReasonsSpinnerResources(reasonlist)
                 }else{
                     Toast.makeText(applicationContext, ""+detailResponse.msg, Toast.LENGTH_SHORT).show()
                 }
@@ -407,18 +611,29 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
         var call = NectarApplication.mRetroClient?.callEventListAPI(1)
         call?.enqueue(object : Callback<JsonObject> {
             override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
-                Log.d("str_response", response.body().toString())
+                Log.d("str_response_event", response.body().toString())
                 val rsp: JsonObject? = response.body() ?: return
                 var response=response.body().toString()
                 val detailResponse = Gson().fromJson<DetailResponse>(rsp,DetailResponse::class.java)
                 Log.d("message", ""+detailResponse.msg)
                 if(detailResponse.msg.equals("Data found"))
                 {
-                    Log.d("jsonarray", ""+detailResponse.event)
-                    //set data into adapter for area
-                    initEventEventResources(detailResponse.event)
+                    eventlist = mutableListOf()
+                    info=DetailInfo()
+                    info.id="0"
+                    info.name="Select One"
+                    eventlist.add(info)
+                    eventlist.addAll(detailResponse.info)
+                    //set data into adapter for event
+                    initEventEventResources(eventlist)
                 }else{
-                    Toast.makeText(applicationContext, ""+detailResponse.msg, Toast.LENGTH_SHORT).show()
+                    eventlist = mutableListOf()
+                    info=DetailInfo()
+                    info.id="0"
+                    info.name="Select One"
+                    eventlist.add(info)
+                    initEventEventResources(eventlist)
+                    //Toast.makeText(applicationContext, ""+detailResponse.msg, Toast.LENGTH_SHORT).show()
                 }
 
 
@@ -434,18 +649,28 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
         var call = NectarApplication.mRetroClient?.callCategoriesListAPI(1)
             call?.enqueue(object : Callback<JsonObject> {
             override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
-                Log.d("str_response", response.body().toString())
+                Log.d("str_response_category", response.body().toString())
                 val rsp: JsonObject? = response.body() ?: return
                 var response=response.body().toString()
                 val detailResponse = Gson().fromJson<DetailResponse>(rsp,DetailResponse::class.java)
                 Log.d("message", ""+detailResponse.msg)
                 if(detailResponse.msg.equals("Data found"))
                 {
-                    Log.d("jsonarray", ""+detailResponse.category)
-                    //set data into adapter for area
-                    initCategorySpinnerResources(detailResponse.category)
+                    categorylist = mutableListOf()
+                    info=DetailInfo()
+                    info.id="0"
+                    info.name="Select One"
+                    categorylist.add(info)
+                    categorylist.addAll(detailResponse.info)
+                    //set data into adapter for category
+                    initCategorySpinnerResources(categorylist)
                 }else{
-                    Toast.makeText(applicationContext, ""+detailResponse.msg, Toast.LENGTH_SHORT).show()
+                    categorylist = mutableListOf()
+                    info=DetailInfo()
+                    info.id="0"
+                    info.name="Select One"
+                    categorylist.add(info)
+                    initCategorySpinnerResources(categorylist)
                 }
 
             }
@@ -461,18 +686,29 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
         var call = NectarApplication.mRetroClient?.callAreaListAPI(1)
         call?.enqueue(object : Callback<JsonObject> {
             override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
-                Log.d("str_response", response.body().toString())
+                Log.d("str_response_area", response.body().toString())
                 val rsp: JsonObject? = response.body() ?: return
                 var response=response.body().toString()
                 val detailResponse = Gson().fromJson<DetailResponse>(rsp,DetailResponse::class.java)
                 Log.d("message", ""+detailResponse.msg)
                 if(detailResponse.msg.equals("Data found"))
                 {
-                    Log.d("jsonarray", ""+detailResponse.name)
+                   // Log.d("jsonarray", ""+detailResponse.name)
                     //set data into adapter for area
-                    initAreaSpinnerResources(detailResponse.name)
+                    arealist = mutableListOf()
+                    info=DetailInfo()
+                    info.orgnid="0"
+                    info.name="Select One"
+                    arealist.add(info)
+                    arealist.addAll(detailResponse.info)
+                    initAreaSpinnerResources(arealist)
                 }else{
-                    Toast.makeText(applicationContext, ""+detailResponse.msg, Toast.LENGTH_SHORT).show()
+                    arealist = mutableListOf()
+                    info=DetailInfo()
+                    info.orgnid="0"
+                    info.name="Select One"
+                    categorylist.add(info)
+                    initAreaSpinnerResources(arealist)
                 }
 
             }
@@ -488,20 +724,29 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
         var call = NectarApplication.mRetroClient?.callProvinceListAPI(1)
         call?.enqueue(object : Callback<JsonObject> {
             override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
-                Log.d("str_response", response.body().toString())
+                Log.d("str_response_province", response.body().toString())
                 val rsp: JsonObject? = response.body() ?: return
                 var response=response.body().toString()
                 val detailResponse = Gson().fromJson<DetailResponse>(rsp,DetailResponse::class.java)
                 Log.d("message", ""+detailResponse.msg)
-                Log.d("message", ""+detailResponse.msg)
+
                  if(detailResponse.msg.equals("Data found"))
                  {
-
-                     Log.d("jsonarray", ""+detailResponse.province)
+                     provincelist = mutableListOf()
+                     info=DetailInfo()
+                     info.id="0"
+                     info.name="Select One"
+                     provincelist.add(info)
+                     provincelist.addAll(detailResponse.info)
                      //set data into adapter for province
-                     initProvinceSpinnerResources(detailResponse.province)
+                     initProvinceSpinnerResources(provincelist)
                  }else{
-                     Toast.makeText(applicationContext, ""+detailResponse.msg, Toast.LENGTH_SHORT).show()
+                     provincelist = mutableListOf()
+                     info=DetailInfo()
+                     info.id="0"
+                     info.name="Select One"
+                     provincelist.add(info)
+                     initProvinceSpinnerResources(provincelist)
                  }
 
             }
@@ -518,126 +763,165 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
         dialog .requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog .setCancelable(false)
         dialog .setContentView(R.layout.affacted_site_popup_layout)
-        site.add("site1")
-        site.add("site1")
-        site.add("site1")
-        site.add("site1")
-        site.add("site1")
 
         dialog .site_recyclerView
         dialog .site_recyclerView.layoutManager = LinearLayoutManager(this)
 
         // You can use GridLayoutManager if you want multiple columns. Enter the number of columns as a parameter.
 //        rv_animal_list.layoutManager = GridLayoutManager(this, 2)
-
+       /* siteValueList.removeAt(0)
+        siteValueList.removeAt(1)*/
         // Access the RecyclerView Adapter and load the data into it
-        dialog .site_recyclerView.adapter = SiteAdapter(site, this)
+        dialog .site_recyclerView.adapter = SiteAdapter(siteValueList,siteValueListid, this,extra_site)
 
         dialog.deletesitedialog.setOnClickListener{
             dialog.dismiss()
         }
         dialog.show()
     }
-    private fun initserviceSpinnerResources() {
-        incident_services.onItemSelectedListener = this
 
-        //Creating the ArrayAdapter instance having the country list
-        val aa = ArrayAdapter(this, android.R.layout.simple_spinner_item, area_spinner)
-        aa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        //Setting the ArrayAdapter data on the Spinner
-        incident_services.adapter = aa
+    private fun initAffactedSitesResources(sites: ArrayList<DetailInfo>) {
+        Log.d("sitessites",""+sites.size)
+        //set adapter for affacted site
+        val adapter= SiteAutoCompleteAdapter( this,sites)
+        affacted_site.threshold = 1
+        affacted_site.setAdapter(adapter)
     }
-    private fun initAffactedSitesResources(sites: MutableList<String>) {
+
+    private fun initCallerResources(callerlist: ArrayList<DetailInfo>) {
 
         //set adapter for affacted site
-        val siteadapter = ArrayAdapter<String>(
-            this, // Context
-            android.R.layout.simple_spinner_dropdown_item, // Layout
-            sites // Array
-        )
-        affacted_site.threshold = 1
-        affacted_site.setAdapter(siteadapter)
+        val adapter= AutoCompleteAdapter( this,callerlist,callerList_filter)
+        incident_reported_by.threshold = 1
+        incident_reported_by.setAdapter(adapter)
 
     }
-    private fun initReasonsSpinnerResources(reasons: MutableList<String>) {
+    private fun initReasonsSpinnerResources(reasons: MutableList<DetailInfo>) {
         incident_reason.onItemSelectedListener = this
-
-        //Creating the ArrayAdapter instance having the country list
-        reasons.add(0,resources.getString(R.string.select))
-        val aa = ArrayAdapter(this, android.R.layout.simple_spinner_item, reasons)
-        aa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        val adapter= ReasonAdapter( reasons,this)
         //Setting the ArrayAdapter data on the Spinner
-        incident_reason.adapter = aa
+        incident_reason.adapter = adapter
     }
-    private fun initCategorySpinnerResources(categories: MutableList<String>) {
+
+    private fun initsubReasonsSpinnerResources(reasons: MutableList<DetailInfo>) {
+        incident_subreason.onItemSelectedListener = this
+        val adapter= SubReasonAdapter( reasons,this)
+        //Setting the ArrayAdapter data on the Spinner
+        incident_subreason.adapter = adapter
+    }
+    private fun initCategorySpinnerResources(categories: MutableList<DetailInfo>) {
         incident_categories.onItemSelectedListener = this
 
-        //Creating the ArrayAdapter instance having the country list
-        categories.add(0,resources.getString(R.string.select))
-        val aa = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories)
-        aa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        val adapter= AreaAdapter( categories,this)
         //Setting the ArrayAdapter data on the Spinner
-        incident_categories.adapter = aa
+        incident_categories.adapter = adapter
     }
-    private fun initAreaSpinnerResources(area: MutableList<String>) {
+    private fun initAreaSpinnerResources(area: MutableList<DetailInfo>) {
         incident_area.onItemSelectedListener = this
 
-        //Creating the ArrayAdapter instance having the country list
-        area.add(0,resources.getString(R.string.select))
-        val aa = ArrayAdapter(this, android.R.layout.simple_spinner_item, area)
-        aa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        val adapter= AreaAdapter( area,this)
         //Setting the ArrayAdapter data on the Spinner
-        incident_area.adapter = aa
+        incident_area.adapter = adapter
     }
 
-    private fun initEventEventResources(event: MutableList<String>) {
+    private fun initServiceResources(service: MutableList<DetailInfo>) {
+        incident_services.onItemSelectedListener = this
+
+        val adapter= AreaAdapter( service,this)
+        //Setting the ArrayAdapter data on the Spinner
+        incident_services.adapter = adapter
+    }
+
+    private fun initEventEventResources(event: MutableList<DetailInfo>) {
         incident_event.onItemSelectedListener = this
 
-        //Creating the ArrayAdapter instance having the country list
-        event.add(0,resources.getString(R.string.select))
-        val aa = ArrayAdapter(this, android.R.layout.simple_spinner_item, event)
-        aa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        incident_services.onItemSelectedListener = this
+
+        val adapter= AreaAdapter( event,this)
         //Setting the ArrayAdapter data on the Spinner
-        incident_event.adapter = aa
+        incident_event.adapter = adapter
     }
-    private fun initProvinceSpinnerResources(provincearray: MutableList<String>) {
+    private fun initProvinceSpinnerResources(provincearray: MutableList<DetailInfo>) {
        province.onItemSelectedListener = this
 
-        //Creating the ArrayAdapter instance having the country list
-        provincearray.add(0,resources.getString(R.string.select))
-        val aa = ArrayAdapter(this, android.R.layout.simple_spinner_item, provincearray)
-        aa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        incident_services.onItemSelectedListener = this
+
+        val adapter= AreaAdapter( provincearray,this)
         //Setting the ArrayAdapter data on the Spinner
-        province.adapter = aa
+        province.adapter = adapter
     }
     override fun onNothingSelected(p0: AdapterView<*>?) {
 
     }
 
-    override fun onItemSelected(parent: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
+    override fun onItemSelected(parent: AdapterView<*>?, p1: View?, position: Int, p3: Long) {
            if(parent==province)
            {
-               province_value=province.selectedItem.toString()
-               Log.d("province_value",province_value)
+              provinceid=provincelist.get(position).id
+               Log.d("province_value",provinceid)
            }else if(parent==incident_area)
            {
-               area=incident_area.selectedItem.toString()
+               area=arealist.get(position).name
+               areaid=arealist.get(position).orgnid
                Log.d("area",area)
+               Log.d("areaid",areaid)
+               //call api for get service list
+               GetALlServiceList()
            }
-           else if(parent==incident_area)
+           else if(parent==incident_categories)
            {
-               category=incident_categories.selectedItem.toString()
-               Log.d("category",category)
+              categoryid=categorylist.get(position).id
+               Log.d("category",categoryid)
            }
            else if(parent==incident_event)
            {
-               event=incident_event.selectedItem.toString()
-               Log.d("event",event)
+               eventid=eventlist.get(position).id
+               Log.d("event",eventid)
            }
            else if(parent==incident_reason)
            {
-               reason=incident_reason.selectedItem.toString()
+               reason=reasonlist.get(position).reason
+               reasonid=reasonlist.get(position).reason_id
+               Log.d("reasonid",reasonid)
                Log.d("reason",reason)
+               //call api for sub reason list
+               GetALlSubReasonstList()
+           }
+           else if(parent==incident_subreason)
+           {
+               subreason=subreasonlist.get(position).sub_reason
+               sub_reasonid=subreasonlist.get(position).sub_reason_id
+               Log.d("subreason",subreason)
+               Log.d("sub_reasonid",sub_reasonid)
+
+           }
+           else if(parent==incident_services)
+           {
+               services=servicelist.get(position).name
+               servicesid=servicelist.get(position).id
+               Log.d("services",services)
+               Log.d("servicesid",servicesid)
+
+           }
+           else if(parent==incident_qualifications)
+           {
+               if(incident_qualifications.selectedItem.toString().equals("Low"))
+               {
+                   urgency_value="4"
+               }  else  if(incident_qualifications.selectedItem.toString().equals("Medium"))
+               {
+                   urgency_value="3"
+               }
+               else  if(incident_qualifications.selectedItem.toString().equals("High"))
+               {
+                   urgency_value="2"
+               }
+               else  if(incident_qualifications.selectedItem.toString().equals("Critical"))
+               {
+                   urgency_value="1"
+               }
+               Log.d("urgency_value",urgency_value)
+
            }
     }
 
@@ -646,18 +930,20 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
         {
             if(p1==true)
             {
-                 Toast.makeText(applicationContext,"111111", Toast.LENGTH_SHORT).show()
+                technology="2G"
+
             }else if(p1==false){
-                 Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
+
             }
 
         } else   if(p0==g3_checkbox)
         {
             if(p1==true)
             {
-                Toast.makeText(applicationContext,"3333", Toast.LENGTH_SHORT).show()
+                technology="3G"
+
             }else if(p1==false){
-                Toast.makeText(applicationContext,"44444", Toast.LENGTH_SHORT).show()
+
             }
         }
 
@@ -665,65 +951,76 @@ class NewIncidentActivity : AppCompatActivity() , AdapterView.OnItemSelectedList
         {
             if(p1==true)
             {
-                Toast.makeText(applicationContext,"3333", Toast.LENGTH_SHORT).show()
+                technology="4G"
+
             }else if(p1==false){
-                Toast.makeText(applicationContext,"44444", Toast.LENGTH_SHORT).show()
+
             }
         }
         else   if(p0==internationcall_checkbox)
         {
-            Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
+            serviceaffacted="1"
+            Toast.makeText(applicationContext,serviceaffacted, Toast.LENGTH_SHORT).show()
         }
         else   if(p0==voicemail_checkbox)
         {
-            Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
+            serviceaffacted="2"
+            Toast.makeText(applicationContext,serviceaffacted, Toast.LENGTH_SHORT).show()
         }
         else   if(p0==dice_checkbox)
         {
-            Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
+            serviceaffacted="3"
+            Toast.makeText(applicationContext,serviceaffacted, Toast.LENGTH_SHORT).show()
         }
         else   if(p0==face_checkbox)
         {
-            Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
+            serviceaffacted="4"
+            Toast.makeText(applicationContext,serviceaffacted, Toast.LENGTH_SHORT).show()
         }
         else   if(p0==prepaid_checkbox)
         {
-            Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
+            serviceaffacted="5"
+            Toast.makeText(applicationContext,serviceaffacted, Toast.LENGTH_SHORT).show()
         }
         else   if(p0==sms_checkbox)
         {
-            Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
+            serviceaffacted="6"
+            Toast.makeText(applicationContext,serviceaffacted, Toast.LENGTH_SHORT).show()
         }
         else   if(p0==supervise_checkbox)
         {
-            Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
+            serviceaffacted="7"
+            Toast.makeText(applicationContext,serviceaffacted, Toast.LENGTH_SHORT).show()
         }
         else   if(p0==callcentre_checkbox)
         {
-            Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
+            serviceaffacted="8"
+            Toast.makeText(applicationContext,serviceaffacted, Toast.LENGTH_SHORT).show()
         }
         else   if(p0==international_checkbox)
         {
-            Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
+            serviceaffacted="9"
+            Toast.makeText(applicationContext,serviceaffacted, Toast.LENGTH_SHORT).show()
         }
         else   if(p0==ussd_checkbox)
         {
-            Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
-        } else   if(p0==supervise_checkbox)
-        {
-            Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
+            serviceaffacted="10"
+            Toast.makeText(applicationContext,serviceaffacted, Toast.LENGTH_SHORT).show()
         }
         else   if(p0==you_checkbox)
         {
-            Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
+            serviceaffacted="11"
+            Toast.makeText(applicationContext,serviceaffacted, Toast.LENGTH_SHORT).show()
         }
         else   if(p0==sales_checkbox)
         {
-            Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
+            serviceaffacted="12"
+            Toast.makeText(applicationContext,serviceaffacted, Toast.LENGTH_SHORT).show()
         }
         else   if(p0==voice_text)
         {
-            Toast.makeText(applicationContext,"22222", Toast.LENGTH_SHORT).show()
+            serviceaffacted="13"
+            Toast.makeText(applicationContext,serviceaffacted, Toast.LENGTH_SHORT).show()
         }
 
     }

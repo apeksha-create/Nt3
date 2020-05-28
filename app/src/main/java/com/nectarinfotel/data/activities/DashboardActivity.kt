@@ -395,13 +395,14 @@ class DashboardActivity : AppCompatActivity(), AdapterView.OnItemSelectedListene
         departmentTotalList.clear()
         departmentValueList.clear()
         for((start, departmentObj) in info.withIndex()){
-            departmentValueList.add(departmentObj.department)
+            if(departmentObj.department!=null) {
+                departmentValueList.add(departmentObj.department)
 
-            val total = departmentObj.tickets.toFloat()
-            departmentTotalList.add(BarEntry(total,start))
-            totalAgentTicket += total.toInt()
-            TotalTextView.setText(resources.getString(R.string.total_count) + totalAgentTicket)
-
+                val total = departmentObj.tickets.toFloat()
+                departmentTotalList.add(BarEntry(total, start))
+                totalAgentTicket += total.toInt()
+                TotalTextView.setText(resources.getString(R.string.total_count) + totalAgentTicket)
+            }
         }
     }
 

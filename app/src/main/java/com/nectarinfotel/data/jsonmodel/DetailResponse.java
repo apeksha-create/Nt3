@@ -64,6 +64,7 @@ public class DetailResponse implements Parcelable
         in.readList(this.event, (DetailInfo.class.getClassLoader()));
         in.readList(this.reason, (DetailInfo.class.getClassLoader()));
         in.readList(this.site_name, (DetailInfo.class.getClassLoader()));
+
     }
 
     public DetailResponse() {
